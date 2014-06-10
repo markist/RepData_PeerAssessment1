@@ -4,59 +4,83 @@
 ## Loading and preprocessing the data
 
 Load packages:
-```{r}
+
+```r
 library(ggplot2) 
 ```
 
+```
+## Warning: package 'ggplot2' was built under R version 3.0.3
+```
+
 Read in the data:
-```{r}
+
+```r
 activity<-read.csv("C:/Users/Martin/Documents/GitHub/RepData_PeerAssessment1/activity/activity.csv") 
 ```
 
 Remove NAs:
-```{r}
+
+```r
 activity.no_na<-activity[!is.na(activity$steps),]
 ```
 
 Aggregate data to mean per day and rename columns:
-```{r}
+
+```r
 activity.mean<-aggregate(activity.no_na$steps, by = list(activity.no_na$date), FUN = mean)
 colnames(activity.mean)=c("date","mean.steps")
 ```
 
 Remove NAs, aggregate data to mean per day and rename columns:
-```{r}
+
+```r
 activity.sum<-aggregate(activity.no_na$steps, by = list(activity.no_na$date), FUN = sum)
 colnames(activity.sum)=c("date","total.steps")
 ```
 
 ## What is mean total number of steps taken per day?
 Plot a histogram:
-```{rfigure1}
+
+```r
 ggplot(aes(total.steps), data=activity.sum)+
   geom_histogram(binwidth = max(activity.sum$total.steps)/30)+
   ggtitle("Histogram of the total number of steps taken each day")+
   theme_bw()
 ```
 
+![plot of chunk figure1](figure/figure1.png) 
+
 Mean total steps per day:
-```{r}
+
+```r
 mean(activity.sum$total.steps)
 ```
 
+```
+## [1] 10766
+```
+
 Median total steps per day:
-```{r}
+
+```r
 median(activity.sum$total.steps)
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
 Average data:
-```{r}
+
+```r
 activity.average<-aggregate(activity.no_na$steps, by = list(activity.no_na$interval), FUN = mean)
 colnames(activity.average)=c("interval","mean.steps")
 ```
 Time series plot of the 5-minute interval and the average number of steps taken, averaged across all days:
-```{rfigure2}
+
+```r
 time.series.plot<-ggplot(aes(interval,mean.steps), data=activity.average)+
   geom_line()+
   ggtitle("Time series plot")+
@@ -64,34 +88,46 @@ time.series.plot<-ggplot(aes(interval,mean.steps), data=activity.average)+
 print(time.series.plot)
 ```
 
+![plot of chunk figure2](figure/figure2.png) 
+
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-```{r}
+
+```r
 max.interval<-activity.average$interval[activity.average$mean.steps==max(activity.average$mean.steps)]
 print(max.interval)
 ```
 
+```
+## [1] 835
+```
+
 Time series plot of the 5-minute interval and the average number of steps taken, averaged across all days:
-```{rfigure3}
+
+```r
 time.series.plot<-time.series.plot+geom_line(aes(x=max.interval),col="red")
 print(time.series.plot)
 ```
 
+![plot of chunk figure3](figure/figure3.png) 
+
 ## Imputing missing values
 The total number of rows with NAs:
-```{r}
+
+```r
 nrow(activity[is.na(activity$steps),])
 ```
 
-Unsophisticated strategy for filling in all of the missing values(todo):
-```{r}
+```
+## [1] 2304
+```
+
+Unsophisticated strategy for filling in all of the missing values:
+
+```r
 for (t in unique(activity.average$interval)){
-  activity_sub<-activity[activity$interval==t,]
-  if(any(is.na(activity_sub$steps))){
-    print("replace")
-    activity_sub$steps[activity_sub$steps==NA]<-
-      activity.average$mean.steps[activity.average$interval==t]
-  }else{next}
-    activity[activity$interval==t,]<-activity_sub
+  activity_sub<-activity[,activity$date==t]
+  activity_sub$steps[activity_sub$steps==NA]<-activity.average$steps[activity.average$interval==t]
+  activity[,activity$date==t]<-activity_sub
 }
 ```
 
