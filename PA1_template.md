@@ -9,10 +9,6 @@ Load packages:
 library(ggplot2) 
 ```
 
-```
-## Warning: package 'ggplot2' was built under R version 3.0.3
-```
-
 Read in the data:
 
 ```r
@@ -32,7 +28,7 @@ activity.mean<-aggregate(activity.no_na$steps, by = list(activity.no_na$date), F
 colnames(activity.mean)=c("date","mean.steps")
 ```
 
-Remove NAs, aggregate data to mean per day and rename columns:
+Aggregate data to sum per day and rename columns:
 
 ```r
 activity.sum<-aggregate(activity.no_na$steps, by = list(activity.no_na$date), FUN = sum)
@@ -101,15 +97,6 @@ print(max.interval)
 ## [1] 835
 ```
 
-Time series plot of the 5-minute interval and the average number of steps taken, averaged across all days:
-
-```r
-time.series.plot<-time.series.plot+geom_line(aes(x=max.interval),col="red")
-print(time.series.plot)
-```
-
-![plot of chunk figure3](figure/figure3.png) 
-
 ## Imputing missing values
 The total number of rows with NAs:
 
@@ -121,14 +108,37 @@ nrow(activity[is.na(activity$steps),])
 ## [1] 2304
 ```
 
-Unsophisticated strategy for filling in all of the missing values:
+Filling in all of the missing values with average value from same interval:
 
 ```r
 for (t in unique(activity.average$interval)){
-  activity_sub<-activity[,activity$date==t]
-  activity_sub$steps[activity_sub$steps==NA]<-activity.average$steps[activity.average$interval==t]
-  activity[,activity$date==t]<-activity_sub
+  activity_sub<-activity[activity$interval==t,]
+    activity_sub$steps[is.na(activity_sub$steps)]<-activity.average$mean.steps[activity.average$interval==t]
+    activity[activity$interval==t,]<-activity_sub
 }
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day:
+
+```r
+activity$weekday<-weekdays(strptime(activity$date,"%Y-%m-%d"))
+activity$weekday[activity$weekday=="Samstag"|activity$weekday=="Sonntag"]<-"weekend"
+activity$weekday[!activity$weekday=="weekend"]<-"weekday"
+activity$weekday<-factor(activity$weekday)
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was creating using simulated data:
+
+```r
+activity.weekdays<-aggregate(activity$steps,by=list(activity$interval,activity$weekday),mean)
+colnames(activity.weekdays)<-c("interval","weekday","steps")
+
+ggplot(aes(interval,steps),data=activity.weekdays)+
+  geom_line()+
+  facet_grid(weekday~.)+
+  theme_bw()
+```
+
+![plot of chunk figure](figure/figure.png) 
