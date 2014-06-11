@@ -3,7 +3,7 @@
 
 ## Loading and preprocessing the data
 
-Load packages:
+Load required packages:
 
 ```r
 library(ggplot2) 
